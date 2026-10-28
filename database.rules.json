@@ -1,0 +1,25 @@
+{
+  "rules": {
+    "rooms": {
+      "$room": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostUid').val() === auth.uid && newData.child('phase').val() === 'lobby') || (data.exists() && data.child('hostUid').val() === auth.uid))",
+        ".validate": "newData.hasChildren(['hostUid', 'phase', 'round']) && newData.child('hostUid').isString() && (!data.exists() || newData.child('hostUid').val() === data.child('hostUid').val())",
+        "players": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && root.child('rooms').child($room).child('phase').val() === 'lobby'",
+            ".validate": "newData.hasChildren(['name', 'joinedAt']) && newData.child('name').isString() && newData.child('name').val().length >= 2 && newData.child('name').val().length <= 24 && newData.child('joinedAt').isNumber()"
+          }
+        },
+        "answers": {
+          "$round": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid && !data.exists() && root.child('rooms').child($room).child('players').child($uid).exists() && root.child('rooms').child($room).child('phase').val() === 'question' && root.child('rooms').child($room).child('round').val() === $round && now <= root.child('rooms').child($room).child('endsAt').val()",
+              ".validate": "newData.hasChildren(['choice', 'submittedAt']) && newData.child('choice').isNumber() && newData.child('choice').val() >= 0 && newData.child('choice').val() <= 3 && newData.child('submittedAt').isNumber() && newData.child('submittedAt').val() <= now + 3000 && newData.child('submittedAt').val() >= now - 3000"
+            }
+          }
+        }
+      }
+    }
+  }
+}
